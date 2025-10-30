@@ -1,5 +1,14 @@
 # Personal Assistant with Dynamic VDB - Документація
 
+## 📋 Зміст
+- [Автор](#автор)
+- [Опис](#1-опис)
+- [Швидкий старт](#швидкий-старт)
+- [Схема Workflow](#2-схема-workflow)
+- [Покрокова інструкція](#3-покрокова-інструкція-по-нодах)
+- [Налаштування Credentials](#5-налаштування-credentials)
+- [Troubleshooting](#6-troubleshooting)
+
 ## Автор
 **Розробник:** Сергій Щербаков
 **Email:** sergiyscherbakov@ukr.net
@@ -8,6 +17,26 @@
 ### 💰 Підтримати розробку
 Задонатити на каву USDT (BINANCE SMART CHAIN):
 **`0xDFD0A23d2FEd7c1ab8A0F9A4a1F8386832B6f95A`**
+
+---
+
+## Швидкий старт
+
+### Встановлення
+1. Імпортуйте файл `Personal assistent with Dynamic VDB -15.json` в n8n
+2. Налаштуйте credentials (детальна інструкція в розділі 5):
+   - Telegram Bot Token
+   - ElevenLabs API Key
+   - OpenAI API Key
+   - Redis (Upstash)
+   - Zep API Key
+3. Запустіть ноду "Create Graph DB" один раз
+4. Активуйте workflow
+
+### Мінімальні вимоги
+- n8n версія 1.0+
+- Node.js 18+
+- Активні API ключі для всіх сервісів
 
 ---
 
