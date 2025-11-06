@@ -1,0 +1,1097 @@
+{
+  "name": "Personal assistent with Dynamic VDB",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": true
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "794f9a4c-0ee4-4a33-8964-8f84af59bf49",
+      "name": "Telegram Trigger",
+      "webhookId": "6b92c705-2ff1-4bb3-be70-faf8a1edea1c",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZWi14sL1REwFLLc8",
+          "name": "Personal Assistant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.voice.mime_type || $json.message.audio.mime_type }}",
+                    "rightValue": "audio",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "b3f06517-93c6-43cf-8ef2-90a3e61e3461"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b14eb22e-0f38-4cb5-9a4e-20bba78b6059",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "text"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "20015ea8-1473-4556-a7e5-a3f68a1846c3",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id || $json.message.audio.file_id }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        -128
+      ],
+      "id": "909c501d-5e4e-42af-bf85-78f7e84bdb87",
+      "name": "Get a file",
+      "webhookId": "0a0da18b-8eea-478d-a915-79942044b2eb",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZWi14sL1REwFLLc8",
+          "name": "Personal Assistant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "speech",
+        "operation": "speechToText",
+        "additionalOptions": {},
+        "requestOptions": {}
+      },
+      "type": "@elevenlabs/n8n-nodes-elevenlabs.elevenLabs",
+      "typeVersion": 1,
+      "position": [
+        656,
+        -128
+      ],
+      "id": "36e641d6-51b6-43f8-99f2-08190f11f4bd",
+      "name": "Transcribe audio or video",
+      "credentials": {
+        "elevenLabsApi": {
+          "id": "Z6j7Jl6dgDXy5okd",
+          "name": "11labs_education"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('setupPrompt').item.json.setPrompt }}",
+        "options": {
+          "systemMessage": "=You are a helpful assistant\n\nДля пошуку інформації із загальної бази знань використовуй інстурмент \"get_data_from_db\"\n\nВикористовуй наступний контекст\nВЗАЄМОЗВЯЗКИ\n {{ $('get_message_from_graph').item.json.edges }}\nІНФОРМАЦІЯ\n{{ $('get_message_from_thread').item.json.messages }}\n\nЗАВЖДИ використовуй інстурмент \"add_info_to_db\" для додавання ключової та унікальної і важливої інформацїі в векторну базу даних"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2448,
+        -48
+      ],
+      "id": "1c919bec-4601-4a01-9772-e3e3fbab8515",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4294f4de-8f46-4df1-9b4a-c0adca54c5b7",
+              "name": "setPrompt",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "0e5daa63-3b23-4e01-bb07-56a906910033",
+              "name": "userID",
+              "value": "={{ \"edu_\"+$json.message.from.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        864,
+        -128
+      ],
+      "id": "9af5fb2c-1161-45df-abbc-cd39a8b7f9ac",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4294f4de-8f46-4df1-9b4a-c0adca54c5b7",
+              "name": "setPrompt",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "7728b1d8-88b8-407a-8886-1a9bf4fdc498",
+              "name": "userID",
+              "value": "={{ \"edu_\"+$json.message.from.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        864,
+        48
+      ],
+      "id": "120d3623-8dc0-4b02-8de6-9a234eb3bf32",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2368,
+        128
+      ],
+      "id": "0f244713-23fe-4c60-9e94-fd5dc9651604",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "r1mXL5JVPJilJ6rh",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ JSON.stringify($('Telegram Trigger').item.json.message.chat.id) }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        2528,
+        128
+      ],
+      "id": "9b91989f-93b4-4943-b0f3-ac64686e8290",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "laEVTxNKVymKxvhh",
+          "name": "Redis EduUpStash"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.getzep.com/api/v2/users/{{ $json.userID }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1232,
+        -48
+      ],
+      "id": "e1c344ed-312e-4589-9cf6-bb3ad9f9b4ab",
+      "name": "Check_User",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "jSG7uZNdl8ZIS9Ow",
+          "name": "CCapital Bearer Airtable Acc"
+        },
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.user_id }}",
+                    "rightValue": "={{ \"edu_\"+$('Telegram Trigger').item.json.message.from.id }}",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notContains"
+                    },
+                    "id": "6a5acf0d-f6e9-488e-aedb-ddbd3646e199"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "no user"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "66d3b735-ba09-4f2d-aa19-5ed5d42724e0",
+                    "leftValue": "={{ $json.user_id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "user exist"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1376,
+        -48
+      ],
+      "id": "b35c7cf4-226c-4c48-b6f4-82822c6071f1",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.getzep.com/api/v2/users",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"user_id\": \"{{ \"edu_\"+$('Telegram Trigger').item.json.message.from.id }}\",\n    \"first_name\": \"{{ $('Telegram Trigger').item.json.message.from.first_name }}\",\n    \"last_name\": \"{{ $('Telegram Trigger').item.json.message.from.last_name }}\"\n  }",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        -256
+      ],
+      "id": "eddc14e1-0323-4aa0-8510-68853f24b162",
+      "name": "add_user",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.getzep.com/api/v2/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"thread_id\": \"{{ \"edu_\"+$('Telegram Trigger').item.json.message.from.id }}\",\n    \"user_id\": \"{{ \"edu_\"+$('Telegram Trigger').item.json.message.from.id }}\"\n  } ",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1808,
+        -256
+      ],
+      "id": "1d49ff1f-72ef-4e58-8535-fd827d56bfff",
+      "name": "create_thread",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.getzep.com/api/v2/threads/{{ \"edu_\"+$('Telegram Trigger').item.json.message.chat.id }}/messages?lastn=50",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1600,
+        32
+      ],
+      "id": "9515f0f4-eacb-4c1a-bced-4d2710a85d39",
+      "name": "get_message_from_thread",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.getzep.com/api/v2/graph/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"user_id\": \"{{ \"edu_\"+$('Telegram Trigger').item.json.message.from.id }}\",\n    \"query\": {{ JSON.stringify($('setupPrompt').item.json.setPrompt) }},\n    \"scope\": \"edges\",           \n    \"limit\": 20\n  }",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1904,
+        32
+      ],
+      "id": "a7b7e307-11f1-43f8-89f8-e5f56e4ef3af",
+      "name": "get_message_from_graph",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "277b614a-976a-4a29-be20-9df827e4a118",
+              "name": "setPrompt",
+              "value": "={{ $json.setPrompt }}",
+              "type": "string"
+            },
+            {
+              "id": "04ea76b1-bbab-4a3e-a256-74ca49d39b72",
+              "name": "userID",
+              "value": "={{ $json.userID }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1072,
+        -48
+      ],
+      "id": "90b74cd3-6d2d-45c4-9576-40629e1a83ba",
+      "name": "setupPrompt"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.getzep.com/api/v2/threads/{{ $('setupPrompt').item.json.userID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"name\": \"HUMAN\",\n        \"content\": {{ JSON.stringify($('setupPrompt').item.json.setPrompt) }}\n      },\n      {\n        \"role\": \"assistant\",\n        \"name\": \"AI\",\n        \"content\": {{ JSON.stringify($('AI Agent').item.json.output) }}\n      }\n    ]\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2800,
+        -48
+      ],
+      "id": "ac955c75-e695-45e0-b7b8-bce23a8b9192",
+      "name": "add_message_to_grpah",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ JSON.stringify($('AI Agent').item.json.output) }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3008,
+        -48
+      ],
+      "id": "63a81a43-3e04-47c8-9a95-3edaf008f804",
+      "name": "Send a text message",
+      "webhookId": "a9f7726c-4370-4547-b979-69c6aae148c8",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZWi14sL1REwFLLc8",
+          "name": "Personal Assistant"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## ОСНОВНИЙ ФЛОВ",
+        "height": 736,
+        "width": 3440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -96,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "bb408798-ff98-4d2d-a911-3f83a1eb3401",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.getzep.com/api/v2/graph/create",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"graph_id\": \"ai-agent-edu-knowledge\", \"name\": \"AI Agent Knowledge\", \"description\": \"Docs from Google Drive\" }\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        448
+      ],
+      "id": "f9c62377-2e2c-44e9-92be-95faa69f50e1",
+      "name": "Create Graph DB",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## СТВОРИТИ ГРАФ",
+        "height": 272,
+        "width": 432
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -96,
+        352
+      ],
+      "typeVersion": 1,
+      "id": "a2f4bf68-3247-445b-b065-ca06f850eaf6",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "url": "https://ai-2027.com/ai-2027.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        752
+      ],
+      "id": "d7add86e-5b6d-4a58-af1a-eb09f4d79246",
+      "name": "Get a file1"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        176,
+        752
+      ],
+      "id": "ad94a757-c329-4627-a240-75d343c73e00",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $json.text || \"\";\nconst chunks = [];\nconst SIZE = 2000;  // безпечна довжина\nfor (let i=0; i<s.length; i+=SIZE) {\n  chunks.push({\n    type: \"text\",\n    data: s.slice(i, i+SIZE),\n    source_description: $input.first().json.info.Title,\n    created_at: $json.modifiedTime\n  });\n}\nreturn chunks.map(e => ({ json: e }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        384,
+        752
+      ],
+      "id": "18005c6b-dbf2-455a-8b2d-0f4427d3af27",
+      "name": "Chunking"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.getzep.com/api/v2/graph",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"graph_id\": \"ai-agent-edu-knowledge\",\n  \"type\": \"text\",\n  \"data\": {{JSON.stringify($json.data)}},\n  \"source_description\": \"\",\n  \"created_at\": {{JSON.stringify($('Extract from File').item.json.metadata['xmp:modifydate'])}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        752
+      ],
+      "id": "f1280bcd-abb3-4fa4-bca3-ddd116603d4b",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## ДОДАТИ ІНФОРМАЦІЮ",
+        "height": 240,
+        "width": 1008
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -96,
+        688
+      ],
+      "typeVersion": 1,
+      "id": "24118559-92dd-446c-953e-6c038bab1fa1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Запускай даний інстурмент коли необхідно занйти інфомрацію із загальної бази заннь",
+        "method": "POST",
+        "url": "https://api.getzep.com/api/v2/graph/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": {{ JSON.stringify($fromAI(\"ai_response_for_database_search\") ?? \"\") }},\n  \"graph_id\": \"ai-agent-edu-knowledge\",\n  \"limit\": 5\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2848,
+        112
+      ],
+      "id": "d1d79882-2872-4865-aa7d-a4fe3739ae6f",
+      "name": "get_data_from_db",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Використовуй даний інстурмент для додавання ключовї унікальної інформації в векторну базу",
+        "method": "POST",
+        "url": "https://api.getzep.com/api/v2/graph",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"graph_id\": \"ai-agent-edu-knowledge\",\n  \"type\": \"text\",\n  \"data\": {{JSON.stringify($fromAI(\"summary_of_communication\",\"передавай сюди ключову інформацію з комунікації, якої ще немає в твої базі\"))}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        2688,
+        112
+      ],
+      "id": "b5abd862-8032-44e2-a94f-b12eb2d74631",
+      "name": "add_info_to_db",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YVtwOVo5MDifVjzb",
+          "name": "Zep DEV Account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Transcribe audio or video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe audio or video": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "setupPrompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "setupPrompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check_User": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "add_user",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "get_message_from_thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_user": {
+      "main": [
+        [
+          {
+            "node": "create_thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setupPrompt": {
+      "main": [
+        [
+          {
+            "node": "Check_User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_thread": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_message_from_thread": {
+      "main": [
+        [
+          {
+            "node": "get_message_from_graph",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_message_from_graph": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "add_message_to_grpah",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_message_to_grpah": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file1": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Chunking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunking": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get_data_from_db": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_info_to_db": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "50063dd9-ab73-47eb-8990-3dc2d29b5300",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e4ad9d50485b4ab8320a3223b6b7282f65fdd7b9f19f2d3a6f57b260394a6c03"
+  },
+  "id": "QmoGHSxXICnwwRx4",
+  "tags": []
+}
